@@ -18,3 +18,7 @@ project/target/
 # OS files
 Thumbs.db
 .DS_Store
+
+# Local history
+.history/
+
