@@ -1,8 +1,15 @@
-ThisBuild / version          := "0.1.0-SNAPSHOT"
-ThisBuild / organization     := "com.teamgehem"
+ThisBuild / version          := "0.1.0"
+ThisBuild / organization     := "com.github.terdong"
 ThisBuild / scalaVersion     := "3.8.4"
 
-lazy val root = crossProject(JSPlatform, JVMPlatform)
+lazy val root = project.in(file("."))
+  .aggregate(ironkyo.jvm, ironkyo.js)
+  .settings(
+    name := "ironkyo-root",
+    publish / skip := true
+  )
+
+lazy val ironkyo = crossProject(JSPlatform, JVMPlatform)
   .in(file("."))
   .settings(
     name := "ironkyo",
