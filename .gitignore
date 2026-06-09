@@ -7,6 +7,7 @@ project/target/
 .metals/
 .bloop/
 .bsp/
+project/metals.sbt
 
 # VS Code config
 .vscode/
