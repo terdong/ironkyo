@@ -23,10 +23,10 @@ Then, add the library dependency to your `build.sbt`:
 
 ```scala
 // For JVM-only projects
-libraryDependencies += "com.github.terdong.ironkyo" %% "ironkyo" % "0.1.0"
+libraryDependencies += "com.github.terdong.ironkyo" %% "ironkyo" % "0.1.1"
 
 // For Scala.js or cross-platform/shared projects
-libraryDependencies += "com.github.terdong.ironkyo" %%% "ironkyo" % "0.1.0"
+libraryDependencies += "com.github.terdong.ironkyo" %%% "ironkyo" % "0.1.1"
 ```
 
 *Note: This library is experimental and has strict version compatibility requirements. It is compatible with **Scala 3.8.4 and newer** (compiled with Scala 3.8.4). This constraint exists to align with **Kyo 1.0.0-RC2** (which is compiled against Scala 3.8.3). Due to tracking these bleeding-edge releases, older Scala 3 versions are not supported.*
@@ -71,7 +71,10 @@ result match {
 
 ### 2. Multi-field Form Validation
 
-Use `validateAll` to refine multiple inputs at once. If any constraints fail, all failures are collected into an `AggregatedConstraintError` instead of short-circuiting on the first error:
+You can validate multiple fields together. There are two ways to do this:
+
+#### A. Case Class Validation (`validateInto`)
+If you are validating raw fields directly into a Case Class, use `validateInto[T]`. This leverages the constraints already defined on the fields of `T` at compile-time, eliminating the need to repeat constraints at the call-site. It is also fully type-safe at compile-time:
 
 ```scala
 import io.github.iltotore.iron.*
@@ -88,22 +91,28 @@ case class User(
 
 // 2. Perform validation and map into the case class
 val validatedUser: User < Abort[AggregatedConstraintError] =
-  validateAll(
-    field(1).as[Positive],
-    field("John").as[MinLength[3]],
-    field(25).as[Positive]
-  ).into[User]
+  validateInto[User](1, "John", 25)
 ```
 
-If multiple fields are invalid, all errors are accumulated:
+* **Compile-Time Safety**: If you pass mismatched types (e.g. passing a `String` for `id`), or the wrong number of arguments, the compiler will raise a compilation error.
+* **Redundant Check Skip**: If you pass pre-validated/refined values (e.g. `Int :| Positive`), `validateInto` will automatically skip the runtime validation for those fields.
+
+#### B. Ad-hoc Tuple Validation (`validateAll`)
+If you do not have a case class and want to validate several raw fields into a tuple of refined types:
+
+```scala
+val validated: (Int :| Positive, String :| MinLength[3]) < Abort[AggregatedConstraintError] =
+  validateAll(
+    field(1).as[Positive],
+    field("John").as[MinLength[3]]
+  )
+```
+
+If multiple fields are invalid under either approach, all validation errors are accumulated in `AggregatedConstraintError`:
 
 ```scala
 val failingValidation =
-  validateAll(
-    field(-1).as[Positive],
-    field("Jo").as[MinLength[3]],
-    field(-25).as[Positive]
-  ).into[User]
+  validateInto[User](-1, "Jo", -25)
 
 // Running Abort.run(...) will yield:
 // Left(AggregatedConstraintError(List(

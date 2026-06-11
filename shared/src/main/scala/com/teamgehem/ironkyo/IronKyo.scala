@@ -1,9 +1,109 @@
 package com.teamgehem.ironkyo
 
 import scala.deriving.Mirror
+import scala.compiletime.*
 
 import io.github.iltotore.iron.*
+import io.github.iltotore.iron.RuntimeConstraint
 import kyo.*
+
+type Head[T <: Tuple] = T match
+  case h *: t => h
+
+type Tail[T <: Tuple] = T match
+  case h *: t => t
+
+trait FieldValidator[T]:
+  def validate(value: Any): Either[ConstraintError, T]
+
+trait LowPriorityFieldValidator:
+  given default[T]: FieldValidator[T] with
+    def validate(value: Any): Either[ConstraintError, T] = Right(value.asInstanceOf[T])
+
+object FieldValidator extends LowPriorityFieldValidator:
+  given refined[A, C](using constraint: RuntimeConstraint[A, C], ct: scala.reflect.ClassTag[A]): FieldValidator[A :| C] with
+    def validate(value: Any): Either[ConstraintError, A :| C] =
+      val typed = value.asInstanceOf[A]
+      typed.refineEither[C] match
+        case Right(refined) => Right(refined)
+        case Left(msg) => Left(ConstraintError(msg, typed.toString, ct.runtimeClass.getSimpleName))
+
+type BaseType[T] = T match
+  case io.github.iltotore.iron.:|[a, c] => a
+  case _ => T
+
+inline def checkCompatibility[V <: Tuple, M <: Tuple](): Unit =
+  inline (erasedValue[V], erasedValue[M]) match
+    case _: (EmptyTuple, EmptyTuple) => ()
+    case _: (EmptyTuple, mh *: mt) =>
+      error("Fewer arguments provided than the case class requires")
+    case _: (vh *: vt, EmptyTuple) =>
+      error("More arguments provided than the case class requires")
+    case _: (vh *: vt, mh *: mt) =>
+      summonInline[vh <:< BaseType[mh]]
+      checkCompatibility[vt, mt]()
+
+inline def validateFields[M <: Tuple, V <: Tuple](values: V): Either[List[ConstraintError], M] =
+  inline erasedValue[M] match
+    case _: EmptyTuple =>
+      Right(EmptyTuple.asInstanceOf[M])
+    case _: (h *: t) =>
+      val head = values.asInstanceOf[NonEmptyTuple].head.asInstanceOf[Head[V]]
+      val tail = values.asInstanceOf[NonEmptyTuple].tail.asInstanceOf[Tail[V]]
+
+      val validatedHead = summonFrom {
+        case _: (Head[V] <:< Head[M]) =>
+          Right(head.asInstanceOf[Head[M]])
+        case _ =>
+          val validator = summonInline[FieldValidator[Head[M]]]
+          validator.validate(head)
+      }
+
+      val validatedTail = validateFields[Tail[M], Tail[V]](tail)
+
+      (validatedHead, validatedTail) match
+        case (Left(err), Left(errs)) => Left(err :: errs)
+        case (Left(err), _)          => Left(List(err))
+        case (_, Left(errs))         => Left(errs)
+        case (Right(h), Right(t))    => Right((h *: t.asInstanceOf[Tuple]).asInstanceOf[M])
+
+final class ValidateIntoPartiallyApplied[R, M <: Tuple](using val m: Mirror.ProductOf[R] { type MirroredElemTypes = M }):
+  inline def apply[V <: Tuple](rawValues: V): R < Abort[AggregatedConstraintError] =
+    checkCompatibility[V, M]()
+    val result = validateFields[M, V](rawValues) match
+      case Right(tuple) => Right(m.fromProduct(tuple))
+      case Left(errors) => Left(AggregatedConstraintError(errors))
+    Abort.get(result)
+
+  inline def apply[V1](v1: V1): R < Abort[AggregatedConstraintError] =
+    apply(Tuple1(v1))
+
+  inline def apply[V1, V2](v1: V1, v2: V2): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2))
+
+  inline def apply[V1, V2, V3](v1: V1, v2: V2, v3: V3): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2, v3))
+
+  inline def apply[V1, V2, V3, V4](v1: V1, v2: V2, v3: V3, v4: V4): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2, v3, v4))
+
+  inline def apply[V1, V2, V3, V4, V5](v1: V1, v2: V2, v3: V3, v4: V4, v5: V5): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2, v3, v4, v5))
+
+  inline def apply[V1, V2, V3, V4, V5, V6](v1: V1, v2: V2, v3: V3, v4: V4, v5: V5, v6: V6): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2, v3, v4, v5, v6))
+
+  inline def apply[V1, V2, V3, V4, V5, V6, V7](v1: V1, v2: V2, v3: V3, v4: V4, v5: V5, v6: V6, v7: V7): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2, v3, v4, v5, v6, v7))
+
+  inline def apply[V1, V2, V3, V4, V5, V6, V7, V8](v1: V1, v2: V2, v3: V3, v4: V4, v5: V5, v6: V6, v7: V7, v8: V8): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2, v3, v4, v5, v6, v7, v8))
+
+  inline def apply[V1, V2, V3, V4, V5, V6, V7, V8, V9](v1: V1, v2: V2, v3: V3, v4: V4, v5: V5, v6: V6, v7: V7, v8: V8, v9: V9): R < Abort[AggregatedConstraintError] =
+    apply((v1, v2, v3, v4, v5, v6, v7, v8, v9))
+
+inline def validateInto[R](using m: Mirror.ProductOf[R]): ValidateIntoPartiallyApplied[R, m.MirroredElemTypes] =
+  new ValidateIntoPartiallyApplied[R, m.MirroredElemTypes]
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Error Types
