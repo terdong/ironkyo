@@ -1,11 +1,11 @@
 package com.teamgehem.ironkyo
 
-import scala.deriving.Mirror
-import scala.compiletime.*
-
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.RuntimeConstraint
 import kyo.*
+
+import scala.compiletime.*
+import scala.deriving.Mirror
 
 type Head[T <: Tuple] = T match
   case h *: t => h

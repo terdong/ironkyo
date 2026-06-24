@@ -20,11 +20,14 @@ class IronKyoSpec extends FunSuite {
       case Result.Panic(ex)  => throw ex
 
   test("refineAbort should succeed for valid constraints") {
-    val result: Result[ConstraintError, Int :| Positive] = Abort.run(42.refineAbort[Positive]).eval
+    val result: Result[ConstraintError, Int :| Positive] =
+      Abort.run(42.refineAbort[Positive]).eval
     assertEquals(result.toEither, Right(42: Int :| Positive))
   }
 
-  test("refineAbort should abort with ConstraintError for invalid constraints") {
+  test(
+    "refineAbort should abort with ConstraintError for invalid constraints"
+  ) {
     val result = Abort.run((-42).refineAbort[Positive]).eval
     assert(result.toEither.isLeft)
     result.toEither match {
@@ -36,7 +39,9 @@ class IronKyoSpec extends FunSuite {
   }
 
   test("refineAbortWith should abort with custom mapped error") {
-    val result = Abort.run((-42).refineAbortWith[Positive, String](msg => s"Custom: $msg")).eval
+    val result = Abort
+      .run((-42).refineAbortWith[Positive, String](msg => s"Custom: $msg"))
+      .eval
     assertEquals(result.toEither, Left("Custom: Should be strictly positive"))
   }
 
@@ -70,14 +75,18 @@ class IronKyoSpec extends FunSuite {
     }
   }
 
-  test("validateInto should automatically validate fields and map to case class (direct parameters)") {
+  test(
+    "validateInto should automatically validate fields and map to case class (direct parameters)"
+  ) {
     val result = Abort.run {
       validateInto[TestUser](1, "John", 25)
     }.eval
     assertEquals(result.toEither, Right(TestUser(1, "John", 25)))
   }
 
-  test("validateInto should aggregate errors automatically (direct parameters)") {
+  test(
+    "validateInto should aggregate errors automatically (direct parameters)"
+  ) {
     val result = Abort.run {
       validateInto[TestUser](-1, "Jo", -25)
     }.eval
@@ -108,19 +117,31 @@ class IronKyoSpec extends FunSuite {
     assert(errors.contains("Cannot prove that"))
   }
 
-  test("validateInto should fail compilation if arity is mismatched (too few)") {
+  test(
+    "validateInto should fail compilation if arity is mismatched (too few)"
+  ) {
     val errors = compileErrors("""
       import com.teamgehem.ironkyo.*
       validateInto[TestUser](1, "John")
     """)
-    assert(errors.contains("Fewer arguments") || errors.contains("cannot find parameter"))
+    assert(
+      errors.contains("Fewer arguments") || errors.contains(
+        "cannot find parameter"
+      )
+    )
   }
 
-  test("validateInto should fail compilation if arity is mismatched (too many)") {
+  test(
+    "validateInto should fail compilation if arity is mismatched (too many)"
+  ) {
     val errors = compileErrors("""
       import com.teamgehem.ironkyo.*
       validateInto[TestUser](1, "John", 25, "extra")
     """)
-    assert(errors.contains("More arguments") || errors.contains("cannot find parameter"))
+    assert(
+      errors.contains("More arguments") || errors.contains(
+        "cannot find parameter"
+      )
+    )
   }
 }
