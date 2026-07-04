@@ -2,6 +2,10 @@ ThisBuild / version          := "0.1.2"
 ThisBuild / organization     := "com.github.terdong"
 ThisBuild / scalaVersion     := "3.8.4"
 
+val ironVersion  = "3.3.1"
+val kyoVersion   = "1.0.0-RC4"
+val munitVersion = "1.3.3"
+
 lazy val root = project.in(file("."))
   .aggregate(ironkyo.jvm, ironkyo.js)
   .settings(
@@ -14,8 +18,8 @@ lazy val ironkyo = crossProject(JSPlatform, JVMPlatform)
   .settings(
     name := "ironkyo",
     libraryDependencies ++= Seq(
-      "io.github.iltotore" %%% "iron"     % "3.3.1",
-      "io.getkyo"          %%% "kyo-core" % "1.0.0-RC4",
-      "org.scalameta"      %%% "munit"    % "1.3.3" % Test
+      "io.github.iltotore" %%% "iron"     % ironVersion,
+      "io.getkyo"          %%% "kyo-core" % kyoVersion,
+      "org.scalameta"      %%% "munit"    % munitVersion % Test
     )
   )
