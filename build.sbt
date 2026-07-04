@@ -1,9 +1,9 @@
-ThisBuild / version := "0.1.3"
+ThisBuild / version := "0.1.4"
 ThisBuild / organization := "com.github.terdong"
 ThisBuild / scalaVersion := "3.8.4"
 
 val ironVersion = "3.3.1"
-val kyoVersion = "1.0.0-RC5"
+val kyoVersion = "1.0.0-RC4"
 val munitVersion = "1.3.3"
 
 lazy val root = project
