@@ -122,6 +122,12 @@ val failingValidation =
 // )))
 ```
 
+## Contributing
+
+Contributions are welcome! Whether it's reporting bugs, suggesting new features, or submitting pull requests, we appreciate any help to improve this library. 
+
+Feel free to check out the [issues](https://github.com/terdong/ironkyo/issues) or open a new pull request. Let's build a better bridge between Iron and Kyo together!
+
 ## License
 
 This project is licensed under the Apache 2.0 License.
