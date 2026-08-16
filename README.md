@@ -23,10 +23,10 @@ Then, add the library dependency to your `build.sbt`:
 
 ```scala
 // For JVM-only projects
-libraryDependencies += "com.github.terdong.ironkyo" %% "ironkyo" % "0.1.5"
+libraryDependencies += "com.github.terdong.ironkyo" %% "ironkyo" % "0.1.6"
 
 // For Scala.js or cross-platform/shared projects
-libraryDependencies += "com.github.terdong.ironkyo" %%% "ironkyo" % "0.1.5"
+libraryDependencies += "com.github.terdong.ironkyo" %%% "ironkyo" % "0.1.6"
 ```
 
 *Note: This library is experimental and has strict version compatibility requirements. It is compatible with **Scala 3.8.4 and newer** (compiled with Scala 3.8.4). This constraint exists to align with **Kyo 1.0.0-RC6** (which is compiled against Scala 3.8.3). Due to tracking these bleeding-edge releases, older Scala 3 versions are not supported.*
